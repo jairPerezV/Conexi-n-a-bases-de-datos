@@ -1,0 +1,83 @@
+<?php
+$conn = new mysqli("localhost", "root", "", "chatdb");
+$result = $conn->query("SELECT idChat, nombreUsuario, mensaje FROM Chat");
+?>
+<!DOCTYPE html>
+<html>
+<head><title>Listado de Chats</title></head>
+<body>
+<h2>Listado de Chats</h2>
+<dl>
+<?php while($row = $result->fetch_assoc()): ?>
+    <dt><strong>Usuario:</strong> <?= $row['nombreUsuario'] ?></dt>
+    <dd><em>Mensaje:</em> <?= $row['mensaje'] ?></dd>
+<?php endwhile; ?>
+</dl>
+<a href="altaChat.php">Agregar nuevo chat</a>
+</body>
+</html>
+
+
+<?php
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $conn = new mysqli("localhost", "root", "", "chatdb");
+    $stmt = $conn->prepare("INSERT INTO Chat (nombreUsuario, mensaje, fechaHora) VALUES (?, ?, NOW())");
+    $stmt->bind_param("ss", $_POST['nombreUsuario'], $_POST['mensaje']);
+    $stmt->execute();
+    header("Location: listadoChats.php");
+}
+?>
+<!DOCTYPE html>
+<html>
+<head><title>Nuevo Chat</title></head>
+<body>
+<h2>Agregar Chat</h2>
+<form method="post">
+    Nombre: <input type="text" name="nombreUsuario"><br>
+    Mensaje: <textarea name="mensaje"></textarea><br>
+    <input type="submit" value="Enviar">
+</form>
+</body>
+</html>
+
+
+<?php
+$conn = new mysqli("localhost", "root", "", "chatdb");
+
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $res = $conn->query("SELECT * FROM Chat WHERE idChat=$id");
+    $chat = $res->fetch_assoc();
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $stmt = $conn->prepare("UPDATE Chat SET nombreUsuario=?, mensaje=? WHERE idChat=?");
+    $stmt->bind_param("ssi", $_POST['nombreUsuario'], $_POST['mensaje'], $_POST['idChat']);
+    $stmt->execute();
+    header("Location: listadoChats.php");
+}
+?>
+<!DOCTYPE html>
+<html>
+<head><title>Modificar Chat</title></head>
+<body>
+<h2>Modificar Chat</h2>
+<form method="post">
+    <input type="hidden" name="idChat" value="<?= $chat['idChat'] ?>">
+    Nombre: <input type="text" name="nombreUsuario" value="<?= $chat['nombreUsuario'] ?>"><br>
+    Mensaje: <textarea name="mensaje"><?= $chat['mensaje'] ?></textarea><br>
+    <input type="submit" value="Actualizar">
+</form>
+</body>
+</html>
+
+
+
+<?php
+if (isset($_GET['id'])) {
+    $conn = new mysqli("localhost", "root", "", "chatdb");
+    $stmt = $conn->prepare("DELETE FROM Chat WHERE idChat=?");
+    $stmt->bind_param("i", $_GET['id']);
+    $stmt->execute();
+}
+header("Location: listadoChats.php");
